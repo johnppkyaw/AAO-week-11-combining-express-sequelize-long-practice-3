@@ -41,11 +41,46 @@ router.get('/', async (req, res, next) => {
     */
     const where = {};
 
-    // Your code here
+    //6A
+    if(req.query.name) {
+        where.name = {
+            [Op.substring]: req.query.name
+        }
+    }
+
+    if(req.query.studentLimit) {
+        //6B
+        if (req.query.studentLimit.includes(',')) {
+            const numbers = req.query.studentLimit.split(',');
+            const min = parseInt(numbers[0]);
+            const max = parseInt(numbers[1]);
+            if(numbers.length > 2 || isNaN(min) || isNaN(max) || min > max) {
+                errorResult.errors.push("Student Limit should be two numbers: min,max")
+            } else {
+                where.studentLimit = {
+                    [Op.between] : [min, max]
+                }
+            }
+        } else {
+            //6C
+            const number = parseInt(req.query.studentLimit);
+            if (isNaN(number)) {
+                errorResult.errors.push("Student Limit should be an integer");
+            } else {
+                where.studentLimit = number;
+            }
+        }
+    }
+
+
+
+    if(errorResult.errors.length > 0) {
+        return res.status(400).json(errorResult);
+    }
 
     const classrooms = await Classroom.findAll({
         attributes: [ 'id', 'name', 'studentLimit' ],
-        where,
+        where: where,
         // Phase 1B: Order the Classroom search results
         order: [['name']]
     });
