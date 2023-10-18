@@ -2,8 +2,13 @@
 const express = require('express');
 const router = express.Router();
 
+require('dotenv').config();
+require('express-async-errors');
+
+const { sequelize } = require('../db/models/index');
+
 // Import model(s)
-const { Classroom } = require('../db/models');
+const { Classroom, Supply, StudentClassroom } = require('../db/models');
 const { Op } = require('sequelize');
 
 // List of classrooms
@@ -52,13 +57,15 @@ router.get('/', async (req, res, next) => {
 router.get('/:id', async (req, res, next) => {
     let classroom = await Classroom.findByPk(req.params.id, {
         attributes: ['id', 'name', 'studentLimit'],
+        //Phase 5A
+        raw: true
         // Phase 7:
             // Include classroom supplies and order supplies by category then
                 // name (both in ascending order)
             // Include students of the classroom and order students by lastName
                 // then firstName (both in ascending order)
                 // (Optional): No need to include the StudentClassrooms
-        // Your code here
+
     });
 
     if (!classroom) {
@@ -75,7 +82,34 @@ router.get('/:id', async (req, res, next) => {
             // studentLimit of the classroom to the number of students in the
             // classroom
         // Optional Phase 5D: Calculate the average grade of the classroom
-    // Your code here
+    //5A
+    classroom.supplyCount = await Supply.count({
+        where: {
+            classroomId: req.params.id
+        }
+    });
+
+    //5B
+    classroom.studentCount = await StudentClassroom.count({
+        where: {
+            classroomId: req.params.id
+        }
+    });
+
+    //5C
+    classroom.overloaded = classroom.studentCount > classroom.studentLimit ? true : false;
+
+    //5D
+    const avgGradeResult = await StudentClassroom.findOne({
+        where: {
+            classroomId: req.params.id
+        },
+        attributes: [[sequelize.fn("AVG", sequelize.col("grade")), "grade_avg"]],
+        raw:true
+    });
+
+    classroom.avgGrade = avgGradeResult.grade_avg;
+
 
     res.json(classroom);
 });
