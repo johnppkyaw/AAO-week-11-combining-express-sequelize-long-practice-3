@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router();
 
 // Import model(s)
-const { Supply } = require('../db/models');
+const { Supply, Classroom } = require('../db/models');
 
 // List of supplies by category
 router.get('/category/:categoryName', async (req, res, next) => {
@@ -11,11 +11,22 @@ router.get('/category/:categoryName', async (req, res, next) => {
     // Find all supplies by category name
     try{
         const supplies = await Supply.findAll({
+            attributes: ['id', 'category', 'name', 'handed'],
             where: {
                 category: req.params.categoryName
             },
-            // Order results by supply's name then handed
-            order: [['name'], ['handed']]
+            // Phase 8A:
+            // Include Classroom in the supplies query results
+            include: [
+                {
+                    model: Classroom,
+                    attributes: ['id', 'name']
+                }
+            ],
+            // Order nested classroom results by name first then by supply name
+            order: [[Classroom, 'name'], ['name']]
+
+            // Order results by supply's name then handed -- demonstrated in previous phase
         });
         if(supplies.length > 0) {
             // Return the found supplies as the response body
@@ -28,10 +39,7 @@ router.get('/category/:categoryName', async (req, res, next) => {
         next(err);
     }
 
-    // Phase 8A:
-        // Include Classroom in the supplies query results
-        // Order nested classroom results by name first then by supply name
-    // Your code here
+
 });
 
 

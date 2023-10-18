@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router();
 
 // Import model(s)
-const { Student } = require('../db/models');
+const { Student, Classroom, StudentClassroom } = require('../db/models');
 const { Op } = require("sequelize");
 
 // List
@@ -120,7 +120,18 @@ router.get('/', async (req, res, next) => {
         //Phase 1A
         order: [['lastName'], ['firstName']],
         limit: limit,
-        offset: offset
+        offset: offset,
+        //Phase 8B
+        include: [
+            {
+                model: Classroom,
+                attributes: ['id', 'name'],
+                through: {
+                    attributes:['grade']
+                }
+            }
+        ],
+        order: [[Classroom, StudentClassroom, 'grade', 'DESC']]
     });
 
     // Phase 2E: Include the page number as a key of page in the response data
