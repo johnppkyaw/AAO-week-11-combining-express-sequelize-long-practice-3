@@ -25,13 +25,14 @@ app.get('/', (req, res) => {
 
 // Custom error middleware (triggered via call to next(err)) - DO NOT MODIFY
 app.use((err, req, res, next) => {
-    console.error(err);
+    console.log(err.message);
     res.status(400);
 
     if (!err.hasOwnProperty('name')) {
         err = {
             name: "BadRequest",
             ...err,
+            message: err.message
         }
     };
 

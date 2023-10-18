@@ -73,7 +73,8 @@ router.get('/', async (req, res, next) => {
     result.rows = await Student.findAll({
         attributes: ['id', 'firstName', 'lastName', 'leftHanded'],
         where,
-        // Phase 1A: Order the Students search results
+        //Phase 1A
+        order: [['lastName'], ['firstName']]
     });
 
     // Phase 2E: Include the page number as a key of page in the response data
