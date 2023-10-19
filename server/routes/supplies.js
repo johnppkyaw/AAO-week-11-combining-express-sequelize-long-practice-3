@@ -2,6 +2,10 @@
 const express = require('express');
 const router = express.Router();
 
+//Import paginator middleware
+//Phase 10
+const {paginator} = require('../utils/pagination');
+
 // Import model(s)
 const { Supply, Classroom, Student } = require('../db/models');
 
@@ -9,10 +13,16 @@ const { Supply, Classroom, Student } = require('../db/models');
 const{Op} = require("Sequelize");
 
 // List of supplies by category
-router.get('/category/:categoryName', async (req, res, next) => {
+router.get('/category/:categoryName', paginator, async (req, res, next) => {
     // Phase 1C:
     // Find all supplies by category name
     try{
+        //Phase 10
+        const limit = req.limit;
+        const offset = req.offset;
+        const page = req.page;
+        console.log(limit, offset);
+
         const supplies = await Supply.findAll({
             attributes: ['id', 'category', 'name', 'handed'],
             where: {
@@ -27,7 +37,9 @@ router.get('/category/:categoryName', async (req, res, next) => {
                 }
             ],
             // Order nested classroom results by name first then by supply name
-            order: [[Classroom, 'name'], ['name']]
+            order: [[Classroom, 'name'], ['name']],
+            limit: limit,
+            offset: offset
 
             // Order results by supply's name then handed -- demonstrated in previous phase
         });

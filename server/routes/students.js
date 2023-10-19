@@ -2,33 +2,42 @@
 const express = require('express');
 const router = express.Router();
 
+//Import paginator middleware
+//Phase 10
+const {paginator} = require('../utils/pagination');
+
 // Import model(s)
 const { Student, Classroom, StudentClassroom } = require('../db/models');
 const { Op } = require("sequelize");
 
 // List
-router.get('/', async (req, res, next) => {
+router.get('/', paginator, async (req, res, next) => {
     let errorResult = { errors: [], count: 0, pageCount: 0 };
 
+    //Phase 10
+    const limit = req.limit;
+    const offset = req.offset;
+    const page = req.page;
+
     // Phase 2A: Use query params for page & size
-    let page = parseInt(req.query.page);
-    let limit = parseInt(req.query.size);
-    if(page === undefined || isNaN(page) || page === 0) page = 1;
-    if(limit === undefined || isNaN(limit)) limit = 10;
-    let offset;
+    // let page = parseInt(req.query.page);
+    // let limit = parseInt(req.query.size);
+    // if(page === undefined || isNaN(page) || page === 0) page = 1;
+    // if(limit === undefined || isNaN(limit)) limit = 10;
+    // let offset;
     const studentCount = await Student.count();
 
     // Phase 2B: Calculate limit and offset
     // Phase 2B (optional): Special case to return all students (page=0, size=0)
     // Phase 2B: Add an error message to errorResult.errors of
         // 'Requires valid page and size params' when page or size is invalid
-    if(page === 0 && limit === 0) {
-        limit = null;
-        offset = 0;
-        page = 1;
-    } else if (page > 0 || limit > 0) {
-        offset = limit * (page - 1);
-    }
+    // if(page === 0 && limit === 0) {
+    //     limit = null;
+    //     offset = 0;
+    //     page = 1;
+    // } else if (page > 0 || limit > 0) {
+    //     offset = limit * (page - 1);
+    // }
     if(offset >= studentCount) {
         errorResult.errors.push({message:'Requires valid page and size params'})
     }
@@ -68,7 +77,7 @@ router.get('/', async (req, res, next) => {
             [Op.substring]: lastName
         }
     }
-    if(lefty.length>0) {
+    if(lefty) {
         if(lefty === "true") {
             where.leftHanded = Boolean(lefty);
         } else if(lefty === "false"){

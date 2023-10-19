@@ -5,6 +5,11 @@ const router = express.Router();
 require('dotenv').config();
 require('express-async-errors');
 
+//Import paginator middleware
+//Phase 10
+const {paginator} = require('../utils/pagination');
+
+// Import sequelize
 const { sequelize } = require('../db/models/index');
 
 // Import model(s)
@@ -12,8 +17,14 @@ const { Classroom, Supply, Student, StudentClassroom } = require('../db/models')
 const { Op } = require('sequelize');
 
 // List of classrooms
-router.get('/', async (req, res, next) => {
+router.get('/', paginator, async (req, res, next) => {
     let errorResult = { errors: [], count: 0, pageCount: 0 };
+
+    // Phase 10
+    const limit = req.limit;
+    const offset = req.offset;
+    const page = req.page;
+    console.log(limit, offset);
 
     // Phase 6B: Classroom Search Filters
     /*
@@ -78,20 +89,26 @@ router.get('/', async (req, res, next) => {
 
     const classrooms = await Classroom.findAll({
         //9A and 9B
-        attributes: [ 'id', 'name', 'studentLimit', 'createdAt', 'updatedAt', [sequelize.fn('AVG', sequelize.col('Students->StudentClassroom.grade')), 'avgGrade'],[sequelize.fn('COUNT', sequelize.col('Students.id')), 'numStudents']],
+        attributes: [ 'id', 'name', 'studentLimit', 'createdAt', 'updatedAt', [sequelize.fn('AVG', sequelize.col('Students.StudentClassroom.grade')), 'avgGrade'],[sequelize.fn('COUNT', sequelize.col('Students.id')), 'numStudents']],
         include: [
             {
               model: Student,
               attributes: [],
+              include: [
+                {
+                  model: StudentClassroom,
+                  attributes: []
+                }
+              ]
             },
           ],
         where: where,
+        group: ['Classroom.id'],
         // Phase 1B: Order the Classroom search results
         order: [['name']],
-        group: ['Classroom.id']
     });
 
-    res.json(classrooms);
+    res.json(classrooms.slice(offset, offset + limit));
 });
 
 // Single classroom
