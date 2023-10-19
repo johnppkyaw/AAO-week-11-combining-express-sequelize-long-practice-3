@@ -72,17 +72,23 @@ router.get('/', async (req, res, next) => {
         }
     }
 
-
-
     if(errorResult.errors.length > 0) {
         return res.status(400).json(errorResult);
     }
 
     const classrooms = await Classroom.findAll({
-        attributes: [ 'id', 'name', 'studentLimit' ],
+        //9A and 9B
+        attributes: [ 'id', 'name', 'studentLimit', 'createdAt', 'updatedAt', [sequelize.fn('AVG', sequelize.col('Students->StudentClassroom.grade')), 'avgGrade'],[sequelize.fn('COUNT', sequelize.col('Students.id')), 'numStudents']],
+        include: [
+            {
+              model: Student,
+              attributes: [],
+            },
+          ],
         where: where,
         // Phase 1B: Order the Classroom search results
-        order: [['name']]
+        order: [['name']],
+        group: ['Classroom.id']
     });
 
     res.json(classrooms);
